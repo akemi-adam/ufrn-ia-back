@@ -1,3 +1,7 @@
-from django.shortcuts import render
+from django.http import HttpResponse
+from .crawler import AbstractCrawler, Crawler
 
-# Create your views here.
+def index(request):
+    crawler: AbstractCrawler = Crawler(None)
+    crawler.crawl()
+    return HttpResponse("Arquivos salvos.")
