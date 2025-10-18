@@ -76,4 +76,8 @@ class Crawler(AbstractCrawler):
     def list_csvs(self) -> list[str]:
         return [x for x in listdir(self.csvs_path) if isfile(join(self.csvs_path, x))]
 
-    
+    def saveDocs(self) -> None:
+        for filename in self.list_csvs():
+            documents: list[dict] = []
+            self.process(filename, documents)
+            self.docs_handler.save(documents, filename)
