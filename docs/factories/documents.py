@@ -45,3 +45,23 @@ class QdrantDocs(IDocumentsDB):
             limit=100,
         ).points
         return " \n".join([self.document_to_str(hit.payload) for hit in hits])
+    
+    def save(self, documents: any, storage: str) -> None:
+        '''
+        Salva uma lista de documentos numa coleção
+        '''
+        points = []
+        for document in documents:
+            text = self.document_to_str(document)
+            vector = self.encoder.encode(text).tolist()
+            points.append(
+                models.PointStruct(
+                    id=str(uuid4()),
+                    vector=vector,
+                    payload=document
+                )
+            )
+        self.client.upload_points(
+            collection_name=storage,
+            points=points
+        )
