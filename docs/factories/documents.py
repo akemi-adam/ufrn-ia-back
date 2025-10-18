@@ -65,3 +65,30 @@ class QdrantDocs(IDocumentsDB):
             collection_name=storage,
             points=points
         )
+
+    def format_storage_name(self, name: str) -> str:
+        '''
+        Formata o nome de um arquivo csv 
+        para ser o nome de uma coleção
+        '''
+        return name.replace('-', '_').replace('.csv', '')
+
+    def create_storage(self, name) -> None:
+        '''
+        Cria uma nova coleção
+        '''
+        if name not in self.get_collections():
+            self.client.create_collection(
+                collection_name=name,
+                vectors_config=models.VectorParams(
+                    size=self.encoder.get_sentence_embedding_dimension(),
+                    distance=models.Distance.COSINE,
+                ),
+            )
+
+    def get_collections(self):
+        '''
+        Retorna todas as coleções do banco
+        '''
+        return [collection.name for collection in self.client.get_collections().collections]
+
