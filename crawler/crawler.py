@@ -29,23 +29,29 @@ class AbstractCrawler(ABC):
         Crawl-Delay: 10
 
     '''
-    def __init__(self, docs_db):
-        self.docs_db = docs_db
+    def __init__(self, docs_handler: DocumentsFactory):
+        self.docs_handler: DocumentsFactory = docs_handler
         
     @abstractmethod
     def crawl(self) -> None:
         pass
+
+    @abstractmethod
+    def saveDocs(self) -> None:
+        pass
     
 
 class Crawler(AbstractCrawler):
-    def __init__(self, docs_db):
-        super().__init__(docs_db)
+    csvs_path: str = './crawler/csvs/'
+
+    def __init__(self, docs_handler: DocumentsFactory):
+        super().__init__(docs_handler)
         
     def crawl(self) -> None:
         for dataset_url in ['https://dados.ufrn.br/dataset/docentes', 'https://dados.ufrn.br/dataset/cursos-de-graduacao']:
             links = self.request(dataset_url)
             self.save(links)
-            
+            sleep(ROBOTS_WAIT_TIME)
 
     def save_file(self, filename: str, href: str) -> None:
         path = f'{self.csvs_path}{filename}'
@@ -56,15 +62,14 @@ class Crawler(AbstractCrawler):
     def save(self, links) -> None:
         for link in links:
             try:
-                path = f'./crawler/csvs/{link["href"].split("/")[-1]}'
-                response = requests.get(link['href'], verify=False)
-                with open(path, 'wb') as f:
-                    f.write(response.content)
-                print(f'Arquivo salvo: {path}')
+                href: str = link["href"]
+                filename: str = href.split("/")[-1]
+                self.save_file(filename, href)
+                self.docs_handler.create_storage(filename)
             except Exception as e:
                 print(f'Erro ao baixar o arquivo: {e}')
             finally:
-                sleep(10) # Espera 10 segundos entre cada requisição, regra definida no robots.txt do site
+                sleep(ROBOTS_WAIT_TIME)
 
     def request(self, url: str):
         html: bytes = requests.get(url).content
