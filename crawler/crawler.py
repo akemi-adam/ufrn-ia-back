@@ -65,3 +65,11 @@ class Crawler(AbstractCrawler):
         pattern = re.compile(r".*\.csv$")
         links = soup.find_all('a', href=pattern)
         return links
+    
+    def process(self, filename: str, documents: list[dict]):
+        with open(f'{self.csvs_path}/{filename}') as file:
+            reader = csv.reader(file, delimiter=';')
+            keys = next(reader)
+            for row in reader:
+                documents.append(dict(zip(keys, row)))
+
