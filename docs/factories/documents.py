@@ -19,3 +19,12 @@ class IDocumentsDB(ABC):
     def create_storage(self, name: str) -> None:
         pass
 
+
+class QdrantDocs(IDocumentsDB):
+    '''
+    Estabele a conexão com o banco de dados vetorial Qdrant.\n
+    Realiza busca de dados, salva documentos e cria coleções.
+    '''
+    def __init__(self):
+        self.client: QdrantClient = QdrantClient(url=get_env('QDRANT_URL')) # Configurar no .env
+        self.encoder: SentenceTransformer = SentenceTransformer('all-MiniLM-L6-v2')
