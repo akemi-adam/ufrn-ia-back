@@ -1,11 +1,18 @@
+import csv
 import requests
 import re
 
 from abc import ABC, abstractmethod
 from bs4 import BeautifulSoup
 from time import sleep
-from urllib.request import urlretrieve
+from os import listdir, remove
+from os.path import isfile, join
 
+from docs.factories.documents import DocumentsFactory
+
+# Tempo em segundos entre cada requisição
+# Regra definida no robots.txt do site
+ROBOTS_WAIT_TIME = 10
 
 class AbstractCrawler(ABC):
     '''
@@ -81,3 +88,4 @@ class Crawler(AbstractCrawler):
             documents: list[dict] = []
             self.process(filename, documents)
             self.docs_handler.save(documents, filename)
+            remove(f'{self.csvs_path}/{filename}')
