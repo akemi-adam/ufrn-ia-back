@@ -110,3 +110,41 @@ class DocumentsFactory(ABC):
     def create_storage(self, name: str) -> None:
         pass
 
+
+class QdrantFactory(DocumentsFactory):
+    '''
+    '''
+    def __init__(self):
+        super().__init__()
+        self.docs_db: IDocumentsDB = self.create_docs_db()
+
+    def improve_prompt(self, user_prompt: str) -> str:
+        context: str = self.docs_db.search(user_prompt, 'docentes')
+        prompt = f'''
+        Você é um assistente inteligente. Use as informações a seguir para responder à pergunta do usuário.
+
+        Informações recuperadas (contexto):
+        {context}
+
+        Pergunta do usuário:
+        {user_prompt}
+
+        Instruções:
+        - Use apenas as informações fornecidas acima.
+        - Se não souber a resposta, diga "Não tenho informações suficientes".
+        - Seja conciso, claro e objetivo.
+        - Evite inventar respostas.
+        - Caso haja múltiplas fontes conflitantes, indique que a informação é baseada nas fontes disponíveis.
+
+        Resposta:
+        '''
+        return prompt
+
+    def save(self, documents: any, storage: str) -> None:
+        self.docs_db.save(documents, self.docs_db.format_storage_name(storage))
+
+    def create_storage(self, name: str) -> None:
+        self.docs_db.create_storage(self.docs_db.format_storage_name(name))
+
+    def create_docs_db(self) -> IDocumentsDB:
+        return QdrantDocs()
