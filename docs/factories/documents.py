@@ -28,3 +28,20 @@ class QdrantDocs(IDocumentsDB):
     def __init__(self):
         self.client: QdrantClient = QdrantClient(url=get_env('QDRANT_URL')) # Configurar no .env
         self.encoder: SentenceTransformer = SentenceTransformer('all-MiniLM-L6-v2')
+
+    def document_to_str(self, document: dict):
+        '''
+        Transforma um dicionário (documento) em uma string
+        '''
+        return " ".join([f"{k}: {v};\n" for k, v in document.items() if v is not None])
+
+    def search(self, context: str, storage: str) -> str:
+        '''
+        Procura e retorna registros similares ao contexto
+        '''
+        hits = self.client.query_points(
+            collection_name=storage,
+            query=self.encoder.encode(context).tolist(),
+            limit=100,
+        ).points
+        return " \n".join([self.document_to_str(hit.payload) for hit in hits])
