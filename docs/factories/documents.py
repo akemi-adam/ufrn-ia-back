@@ -92,3 +92,21 @@ class QdrantDocs(IDocumentsDB):
         '''
         return [collection.name for collection in self.client.get_collections().collections]
 
+
+class DocumentsFactory(ABC):
+    @abstractmethod
+    def improve_prompt(self, user_prompt: str) -> str:
+        pass
+
+    @abstractmethod
+    def save(self, documents: any, storage: str) -> None:
+        pass
+
+    @abstractmethod
+    def create_docs_db(self) -> IDocumentsDB:
+        pass
+
+    @abstractmethod
+    def create_storage(self, name: str) -> None:
+        pass
+
