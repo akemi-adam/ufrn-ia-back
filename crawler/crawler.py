@@ -38,7 +38,13 @@ class Crawler(AbstractCrawler):
         for dataset_url in ['https://dados.ufrn.br/dataset/docentes', 'https://dados.ufrn.br/dataset/cursos-de-graduacao']:
             links = self.request(dataset_url)
             self.save(links)
-            sleep(10) # Espera 10 segundos entre cada requisição, regra definida no robots.txt do site
+            
+
+    def save_file(self, filename: str, href: str) -> None:
+        path = f'{self.csvs_path}{filename}'
+        response = requests.get(href, verify=False)
+        with open(path, 'wb') as f:
+            f.write(response.content)
     
     def save(self, links) -> None:
         for link in links:
