@@ -73,3 +73,7 @@ class Crawler(AbstractCrawler):
             for row in reader:
                 documents.append(dict(zip(keys, row)))
 
+    def list_csvs(self) -> list[str]:
+        return [x for x in listdir(self.csvs_path) if isfile(join(self.csvs_path, x))]
+
+    
