@@ -11,8 +11,11 @@ services:
     environment:
       - PYTHONUNBUFFERED=1
       - DJANGO_SETTINGS_MODULE=ufrnia.settings
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
     depends_on:
       - qdrant
+      - redis
     restart: unless-stopped
 
   qdrant:
@@ -23,5 +26,14 @@ services:
       - qdrant_storage:/qdrant/storage
     restart: unless-stopped
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    restart: unless-stopped
+
 volumes:
   qdrant_storage:
+  redis_data:
