@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <title>Teste WebSocket</title>
+</head>
+<body>
+  <h2>Teste de WebSocket</h2>
+
+  <textarea id="msg" type="text" cols="80" rows="10" placeholder="Digite sua mensagem..."></textarea><br>
+  <button onclick="sendMessage()">Enviar</button>
+
+  <pre id="log" style="border: solid black 2px; padding: 10px; margin-bottom: 10px;"></pre>
+  <p id="response" style="border: solid black 2px; padding: 10px;"></p>
+
+  <script>
+    const log = (msg) => {
+      const pre = document.getElementById('log');
+      pre.textContent += msg + '\n';
+    };
+
+
+    const socket = new WebSocket('ws://localhost:8000/ws/chat/id1/');
+
+    socket.onopen = () => log('✅ Conectado ao servidor');
+    socket.onmessage = (event) => {
+        // log('📩 ' + event.data);
+        const p = document.getElementById('response');
+        const data = JSON.parse(event.data)
+        console.log(data)
+        p.innerHTML += data.type == 'reasoning'
+            ? `<span style="color: red;">${data.message}</span>`
+            : `<span>${data.message}</span>`;
+    }
+    socket.onerror = (err) => log('❌ Erro: ' + err.message);
+    socket.onclose = () => log('🔌 Conexão fechada');
+
+    function sendMessage() {
+      const msg = document.getElementById('msg').value;
+      socket.send(JSON.stringify({ message: msg }));
+      log('📤 Você: ' + msg);
+      document.getElementById('msg').value = '';
+    }
+  </script>
+</body>
+</html>
