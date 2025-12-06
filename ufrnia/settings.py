@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'chat',
     'crawler',
     'users',
+    'messages',
 ]
 
 MIDDLEWARE = [
