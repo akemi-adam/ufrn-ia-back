@@ -40,23 +40,30 @@ class ChatConsumer(AsyncWebsocketConsumer):
             return
         data = loads(text_data)
         message = data['message']
+        chat_id = data['chat_id']
         await self.channel_layer.group_send(
             self.room_group_name,
             {
                 'type': 'chat_message',
-                'message': message
+                'message': message,
+                'chat_id': chat_id
             }
         )
 
     async def chat_message(self, event):
         '''
-        Usa o RAG e devolve a resposta para o cliente
+        Usa o RAG, devolve a resposta para o cliente e salva a mensagem no banco de dados
         '''
+        from chat.models import Chat
         docs_handler: DocumentsFactory = QdrantFactory()
         user_prompt: str = event['message']
-        prompt = docs_handler.improve_prompt(user_prompt)
+        chat_id: int = int(event['chat_id'])
+        chat: Chat = await sync_to_async(Chat.objects.get)(id=chat_id, user=self.user)
+        messages = await sync_to_async(list)(chat.messages.values('sender', 'content'))
+        memory = '\n'.join([f"{m['sender']}: {m['content']}" for m in messages])
+        prompt = docs_handler.improve_prompt(user_prompt, memory)
         response_strategy: PromptResponseStrategy = NvidiaResponse()
-
+        response: str = ''
         async for chunk in response_strategy.response(prompt):
             choice = chunk.choices[0].delta
             reasoning = getattr(choice, "reasoning_content", None)
