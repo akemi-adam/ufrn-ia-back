@@ -20,3 +20,21 @@ class LoginView(APIView):
             'token': token.key,
             'id': user.id
         })
+
+
+class RegisterView(APIView):
+    permission_classes = [AllowAny]
+    
+    def post(self, request):
+        serializer = RegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        token, _ = Token.objects.get_or_create(user=user)
+        return Response({
+                'id': user.id,
+                # 'email': user.email,
+                'token': token.key
+            },
+            status=status.HTTP_201_CREATED
+        )
+
