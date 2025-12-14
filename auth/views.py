@@ -38,3 +38,11 @@ class RegisterView(APIView):
             status=status.HTTP_201_CREATED
         )
 
+
+class LogoutView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        request.user.auth_token.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
