@@ -9,9 +9,11 @@ class ChatConsumer(AsyncWebsocketConsumer):
     WebSocket para processar as respostas do RAG em tempo real
     '''
     async def connect(self):
-        '''
-        Cria um grupo e aceita a conexão
-        '''
+        user = self.scope['user']
+        if not user or user.is_anonymous:
+            await self.close(code=401)
+            return
+        self.user = user
         self.room_name = self.scope['url_route']['kwargs']['chat_id']
         self.room_group_name = f'chat_{self.room_name}'
         await self.channel_layer.group_add(
@@ -33,6 +35,9 @@ class ChatConsumer(AsyncWebsocketConsumer):
         '''
         Recebe o dado e envia ele para os membros do grupo
         '''
+        if not self.scope["user"].is_authenticated:
+            await self.close(code=401)
+            return
         data = loads(text_data)
         message = data['message']
         await self.channel_layer.group_send(
