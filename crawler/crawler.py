@@ -48,6 +48,8 @@ class Crawler(AbstractCrawler):
         super().__init__(docs_handler)
         
     def crawl(self) -> None:
+        # Substituir por uma lista de URLs a serem crawleadas que vem do banco de dados
+        # Aqui tem que verificar também se a coleção já existe/comparar a data da última atualização no site com a data do último crawl/scraping 
         for dataset_url in ['https://dados.ufrn.br/dataset/docentes', 'https://dados.ufrn.br/dataset/cursos-de-graduacao']:
             links = self.request(dataset_url)
             self.save(links)
@@ -89,6 +91,9 @@ class Crawler(AbstractCrawler):
         return [x for x in listdir(self.csvs_path) if isfile(join(self.csvs_path, x))]
 
     def saveDocs(self) -> None:
+        # Antes de salvar, tem que deletar os dados antigos no banco de dados (qdrant)
+        # Se quiser fazer melhor, na hora de fazer o web scraping, você pode comparar a data de atualização do dataset no site com a data do último crawl/scraping, e aí só pegar os CSVs novos, se houver
+        # Com isso não precisaria apagar os dados antigos
         for filename in self.list_csvs():
             documents: list[dict] = []
             self.process(filename, documents)
