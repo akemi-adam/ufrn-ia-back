@@ -68,8 +68,7 @@ class QdrantDocs(IDocumentsDB):
 
     def format_storage_name(self, name: str) -> str:
         '''
-        Formata o nome de um arquivo csv 
-        para ser o nome de uma coleção
+        Formata o nome de um arquivo csv para ser o nome de uma coleção
         '''
         return name.replace('-', '_').replace('.csv', '')
 
@@ -95,7 +94,7 @@ class QdrantDocs(IDocumentsDB):
 
 class DocumentsFactory(ABC):
     @abstractmethod
-    def improve_prompt(self, user_prompt: str) -> str:
+    def improve_prompt(self, user_prompt: str, memory: str) -> str:
         pass
 
     @abstractmethod
@@ -118,13 +117,18 @@ class QdrantFactory(DocumentsFactory):
         super().__init__()
         self.docs_db: IDocumentsDB = self.create_docs_db()
 
-    def improve_prompt(self, user_prompt: str) -> str:
-        context: str = self.docs_db.search(user_prompt, 'docentes')
+    def improve_prompt(self, user_prompt: str, memory: str) -> str:
+        context: str = 'Cursos de graduação:\n' + self.docs_db.search(user_prompt, 'cursos_de_graduacao')
+        context += '\n\nDocentes' + self.docs_db.search(user_prompt, 'docentes') # Temporário
+        # context += '\n\nTurmas' + self.docs_db.search(user_prompt, 'turmas_2022.1') # Temporário
         prompt = f'''
         Você é um assistente inteligente. Use as informações a seguir para responder à pergunta do usuário.
 
         Informações recuperadas (contexto):
         {context}
+
+        Memória das últimas interações com o usuário:
+        {memory}
 
         Pergunta do usuário:
         {user_prompt}
