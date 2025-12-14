@@ -14,6 +14,7 @@ from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
 from channels.auth import AuthMiddlewareStack
 from whitenoise import WhiteNoise
+from chat.middlewares import TokenAuthMiddleware
 
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ufrnia.settings')
@@ -23,7 +24,10 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ufrnia.settings')
 # application = get_asgi_application()
 application = ProtocolTypeRouter({
     'http': get_asgi_application(),
-    'websocket': AuthMiddlewareStack(
+    # 'websocket': AuthMiddlewareStack(
+    #     URLRouter(chat.routing.websocket_urlpatterns)
+    # )
+    'websocket': TokenAuthMiddleware(
         URLRouter(chat.routing.websocket_urlpatterns)
-    )
+    ),
 })

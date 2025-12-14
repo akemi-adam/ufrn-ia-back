@@ -12,7 +12,7 @@ O repositório contém:
 
 Como usar (desenvolvimento):
 
-1. Ajuste DJANGO_SETTINGS_MODULE no docker-compose.yml para apontar para o settings do seu projeto.
+1. Ajuste DJANGO_SETTINGS_MODULE no docker-compose.yml para apontar para o settings do projeto.
 2. Preencha requirements.txt com as dependências do seu projeto.
 3. Rode:
    ```
@@ -23,4 +23,4 @@ Como usar (desenvolvimento):
 Observações:
 - Em produção use um servidor WSGI (gunicorn) e configure banco de dados (Postgres, etc.) no docker-compose.
 - Se precisar que o serviço web espere até o banco ou outro serviço estar pronto, considere adicionar um wait-for-it ou healthcheck.
-- O entrypoint tenta aplicar migrations automaticamente; ajuste conforme fluxo do seu projeto.
+- O entrypoint tenta aplicar migrations automaticamente; ajuste conforme fluxo do projeto.
