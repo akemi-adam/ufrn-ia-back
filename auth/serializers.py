@@ -19,3 +19,34 @@ class LoginSerializer(serializers.Serializer):
         data['user'] = user
         return data
 
+
+class RegisterSerializer(serializers.ModelSerializer):
+    password = serializers.CharField(write_only=True)
+    password_again = serializers.CharField(write_only=True)
+
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'password', 'password_again')
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Email já cadastrado")
+        return value
+
+    def validate(self, attrs):
+        if attrs['password'] != attrs['password_again']:
+            raise serializers.ValidationError({
+                'password_again': 'As senhas não coincidem'
+            })
+        return attrs
+
+    def create(self, validated_data):
+        validated_data.pop('password_again')
+        user = User.objects.create_user(
+            username=validated_data['username'],
+            email=validated_data['email'],
+            password=validated_data['password']
+        )
+        return user
+
+    
