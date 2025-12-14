@@ -3,6 +3,7 @@ from channels.generic.websocket import AsyncWebsocketConsumer
 from docs.factories.documents import DocumentsFactory, QdrantFactory
 from docs.strategies.llm import PromptResponseStrategy, NvidiaResponse
 from asyncio import sleep
+from asgiref.sync import sync_to_async
 
 class ChatConsumer(AsyncWebsocketConsumer):
     '''
@@ -59,23 +60,32 @@ class ChatConsumer(AsyncWebsocketConsumer):
         user_prompt: str = event['message']
         chat_id: int = int(event['chat_id'])
         chat: Chat = await sync_to_async(Chat.objects.get)(id=chat_id, user=self.user)
-        messages = await sync_to_async(list)(chat.messages.values('sender', 'content'))
+        messages = await sync_to_async(list)(chat.messages.values('sender', 'content')[:10])
         memory = '\n'.join([f"{m['sender']}: {m['content']}" for m in messages])
         prompt = docs_handler.improve_prompt(user_prompt, memory)
         response_strategy: PromptResponseStrategy = NvidiaResponse()
         response: str = ''
         async for chunk in response_strategy.response(prompt):
             choice = chunk.choices[0].delta
-            reasoning = getattr(choice, "reasoning_content", None)
-            content = getattr(choice, "content", None)
-            if reasoning:
+            reasoning = getattr(choice, 'reasoning_content', None)
+            content = getattr(choice, 'content', None)
+            if reasoning or content:
                 await self.send(text_data=dumps({
-                    'message': reasoning,
-                    'type': 'reasoning'
-                }))
-            if content:
-                await self.send(text_data=dumps({
-                    'message': content,
-                    'type': 'answer'
+                    'message': (reasoning or content),
+                    'type': 'answer',
+                    'done': False
                 }))
             await sleep(0.1)
+        await self.save_message(chat, response)
+
+    async def save_message(self, chat, content):
+        '''
+        Salva a mensagem no banco de dados
+        '''
+        from chat.models import Message
+        message = Message(
+            chat=chat,
+            sender='ia',
+            content=content
+        )
+        await sync_to_async(message.save)()
