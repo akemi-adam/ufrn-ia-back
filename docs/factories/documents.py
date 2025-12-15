@@ -19,6 +19,10 @@ class IDocumentsDB(ABC):
     def create_storage(self, name: str) -> None:
         pass
 
+    @abstractmethod
+    def delete_storage(self, name: str) -> None:
+        pass
+
 
 class QdrantDocs(IDocumentsDB):
     '''
@@ -27,7 +31,7 @@ class QdrantDocs(IDocumentsDB):
     '''
     def __init__(self):
         self.client: QdrantClient = QdrantClient(url=get_env('QDRANT_URL')) # Configurar no .env
-        self.encoder: SentenceTransformer = SentenceTransformer('all-MiniLM-L6-v2')
+        self.encoder: SentenceTransformer = SentenceTransformer('all-MiniLM-L6-v2', device='cpu')
 
     def document_to_str(self, document: dict):
         '''
@@ -84,6 +88,14 @@ class QdrantDocs(IDocumentsDB):
                     distance=models.Distance.COSINE,
                 ),
             )
+    
+    def delete_storage(self, name: str) -> None:
+        '''
+        Remove uma coleção, se existir
+        '''
+        collections = self.get_collections()
+        if name in collections:
+            self.client.delete_collection(name)
 
     def get_collections(self):
         '''
@@ -107,6 +119,10 @@ class DocumentsFactory(ABC):
 
     @abstractmethod
     def create_storage(self, name: str) -> None:
+        pass
+
+    @abstractmethod
+    def delete_storage(self, name: str) -> None:
         pass
 
 
@@ -152,3 +168,6 @@ class QdrantFactory(DocumentsFactory):
 
     def create_docs_db(self) -> IDocumentsDB:
         return QdrantDocs()
+    
+    def delete_storage(self, name: str) -> None:
+        self.docs_db.delete_storage(self.docs_db.format_storage_name(name))
