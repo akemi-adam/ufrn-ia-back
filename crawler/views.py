@@ -2,17 +2,11 @@ from django.http import HttpResponse
 from .crawler import AbstractCrawler, Crawler
 from docs.factories.documents import DocumentsFactory, QdrantFactory
 
-def index(request):
-    docs_handler: DocumentsFactory = QdrantFactory()
-    crawler: AbstractCrawler = Crawler(docs_handler)
+def run_crawler(request):
+    docs_handler = QdrantFactory()
+    crawler = Crawler(docs_handler)
     crawler.crawl()
-    return HttpResponse("Arquivos salvos.")
-
-def saveDocs(request):
-    docs_handler: DocumentsFactory = QdrantFactory()
-    crawler: AbstractCrawler = Crawler(docs_handler)
-    crawler.saveDocs()
-    return HttpResponse("Arquivos processados.")
+    return HttpResponse("Arquivos salvos/processados")
 
 def testSearch(request):
     docs_handler: DocumentsFactory = QdrantFactory()
