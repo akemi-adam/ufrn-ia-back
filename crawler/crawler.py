@@ -9,6 +9,8 @@ from os import listdir, remove
 from os.path import isfile, join
 
 from docs.factories.documents import DocumentsFactory
+from crawler.models import Collection
+from datetime import datetime
 
 # Tempo em segundos entre cada requisição
 # Regra definida no robots.txt do site
@@ -48,11 +50,16 @@ class Crawler(AbstractCrawler):
         super().__init__(docs_handler)
         
     def crawl(self) -> None:
-        # Substituir por uma lista de URLs a serem crawleadas que vem do banco de dados
-        # Aqui tem que verificar também se a coleção já existe/comparar a data da última atualização no site com a data do último crawl/scraping 
-        for dataset_url in ['https://dados.ufrn.br/dataset/docentes', 'https://dados.ufrn.br/dataset/cursos-de-graduacao']:
-            links = self.request(dataset_url)
+        collections = Collection.objects.all()
+
+        for collection in collections:
+            links = self.request(collection.url)
             self.save(links)
+            self.saveDocs()
+
+            collection.last_scraping = datetime.now()
+            collection.save()
+
             sleep(ROBOTS_WAIT_TIME)
 
     def save_file(self, filename: str, href: str) -> None:
@@ -91,11 +98,11 @@ class Crawler(AbstractCrawler):
         return [x for x in listdir(self.csvs_path) if isfile(join(self.csvs_path, x))]
 
     def saveDocs(self) -> None:
-        # Antes de salvar, tem que deletar os dados antigos no banco de dados (qdrant)
-        # Se quiser fazer melhor, na hora de fazer o web scraping, você pode comparar a data de atualização do dataset no site com a data do último crawl/scraping, e aí só pegar os CSVs novos, se houver
-        # Com isso não precisaria apagar os dados antigos
         for filename in self.list_csvs():
-            documents: list[dict] = []
+            collection_name = filename.replace('.csv', '')
+            self.docs_handler.delete_storage(collection_name)
+            self.docs_handler.create_storage(collection_name)
+            documents = []
             self.process(filename, documents)
-            self.docs_handler.save(documents, filename)
+            self.docs_handler.save(documents, collection_name)
             remove(f'{self.csvs_path}/{filename}')
